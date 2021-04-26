@@ -52,6 +52,15 @@ if(WIN32)
     endif()
 endif()
 
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+if(NOT BUILD_SHARED_LIBS)
+  message(STATUS "Use static libraries for CURL")
+  if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.12)
+    add_definitions(-DCURL_STATICLIB)
+  else()
+    add_compile_definitions(CURL_STATICLIB)
+  endif()
+endif(NOT BUILD_SHARED_LIBS)
 
 # Conan.io integration
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/conanbuildinfo.cmake)
@@ -100,7 +109,7 @@ file(GLOB_RECURSE SourceFileList "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 add_library(${PROJECT_NAME} SHARED ${HeaderFileList} ${SourceFileList})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1 VERSION 1.0.0)
-target_link_libraries(${PROJECT_NAME} PUBLIC curl)
+target_link_libraries(${PROJECT_NAME} PUBLIC CURL::libcurl)
 if(CONAN_LIBS)
   target_link_libraries(${PROJECT_NAME} PRIVATE ${CONAN_LIBS})
 endif()
@@ -123,7 +132,7 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES OUTPUT_NAME ${PROJECT_NA
 # This conflicts with the "curlpp.lib" import library corresponding to "curlpp.dll",
 # so we add a "lib" prefix (which is default on other platforms anyway):
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
-target_link_libraries(${PROJECT_NAME}_static PUBLIC curl)
+target_link_libraries(${PROJECT_NAME}_static PUBLIC CURL::libcurl)
 if(CONAN_LIBS)
   target_link_libraries(${PROJECT_NAME}_static PRIVATE ${CONAN_LIBS})
 endif()
