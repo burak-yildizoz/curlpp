@@ -1,148 +1,108 @@
 #include "curlpp/internal/SList.hpp"
 
+#include <cassert>
 #include <ostream>
 #include <string>
 
+namespace curlpp {
 
-namespace curlpp
-{
+namespace internal {
 
-
-namespace internal
-{
-
-
-SList::SList(const SList & rhs) 
-	: mList(0)
-	, mData(rhs.mData)
-{
-	update();
+SList::SList(const SList& rhs) : mList(nullptr) {
+  constructFrom(rhs.mList);
 }
 
+SList::SList(std::unique_ptr<curl_slist> list) : mList(list.release()) {}
 
-SList::SList(curl_slist * list)
-	: mList(NULL)
-{
-	constructFrom(list);
+SList::SList(const std::list<std::string>& rhs) : mList(nullptr) {
+  set(rhs);
 }
 
-
-SList::SList(const std::list<std::string> & rhs)
-	: mList(0)
-	, mData(rhs)
-{
-	update();
+SList::~SList() {
+  clear();
 }
 
-
-SList::SList() 
-	: mList(0)
-{}
-
-
-SList::~SList()
-{
-	clear();
+void SList::clear() {
+  if (mList != nullptr) {
+    curl_slist_free_all(mList);
+    mList = nullptr;
+  }
 }
 
+void SList::constructFrom(curl_slist* list) {
+  // mList needs to be null. This guarantees that we won't
+  // stumble upon bugs like current given list is a portion
+  // of owned list or vice versa, and we endup deleting a
+  // portion of it.
+  //
+  // So, we'll be sure to create a new list.
+  assert(!mList);
 
-void
-SList::clear()
-{
-	if(mList != 0)
-	{
-		curl_slist_free_all(mList);
-		mList = 0;
-	}
+  curl_slist* c = list;
+  while (c) {
+    mList = curl_slist_append(mList, c->data);
+    c = c->next;
+  }
 }
 
+void SList::set(const std::list<std::string>& list) {
+  clear();
 
-void 
-SList::constructFrom(curl_slist * list)
-{
-	mData.clear();
-
-	curl_slist * c = list;
-	while(c)
-	{
-		mData.push_back(c->data);
-		c = c->next;
-	}
-
-	update();
+  for (auto& elem : list) {
+    mList = curl_slist_append(mList, elem.c_str());
+  }
 }
 
-
-void 
-SList::set(const std::list<std::string> & list) 
-{
-	mData = list;
-	update();
+SList::operator std::list<std::string>() {
+  return list();
 }
 
-
-void 
-SList::update() 
-{
-	clear();
-
-	for(std::list<std::string>::const_iterator pos = mData.begin();
-			pos != mData.end();
-			pos++)
-	{
-		mList = curl_slist_append(mList, (*pos).c_str());
-	}
+SList& SList::operator=(const std::list<std::string>& list) {
+  set(list);
+  return (*this);
 }
 
-
-SList::operator std::list<std::string> ()
-{
-	return list();
+curl_slist* SList::cslist() const {
+  return mList;
 }
 
+std::list<std::string> SList::list() {
+  std::list<std::string> returnValue;
+  curl_slist* c = mList;
+  while (c) {
+    returnValue.push_back(c->data);
+    c = c->next;
+  }
 
-SList &
-SList::operator=(const std::list<std::string> & list)
-{
-	set(list);
-	return (*this);
+  return returnValue;
 }
 
+void SList::buildList(std::unique_ptr<curl_slist> list,
+                      std::list<std::string>& value) {
+  value.clear();
 
-curl_slist *
-SList::cslist() const
-{
-	return mList;
+  SList slist(std::move(list));
+
+  curl_slist* c = slist.mList;
+  while (c) {
+    value.push_back(c->data);
+    c = c->next;
+  }
 }
 
+}  // namespace internal
 
-std::list<std::string>
-SList::list() 
-{
-	return mData;
-}
+}  // namespace curlpp
 
+std::ostream& operator<<(std::ostream& stream,
+                         const std::list<std::string>& value) {
+  for (std::list<std::string>::const_iterator pos = value.begin();
+       pos != value.end(); pos++) {
+    if (pos != value.begin()) {
+      stream << ", ";
+    }
+    stream << (*pos);
+  }
 
-
-
-} // namespace internal
-
-
-} // namespace curlpp
-
-
-std::ostream & operator<<(std::ostream & stream, const std::list<std::string> & value)
-{
-	for(std::list<std::string>::const_iterator pos = value.begin();
-			pos != value.end();
-			pos++)
-	{
-		if(pos != value.begin())
-		{
-			stream << ", ";
-		}
-		stream << (*pos);
-	}
-
-	return stream;
+  return stream;
 }

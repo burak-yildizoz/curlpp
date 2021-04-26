@@ -1,6 +1,8 @@
 *.Po
 *.o
 *.a
+*.so
+*.so.*
 *.la
 *.lo
 *.Plo
@@ -12,6 +14,7 @@ Makefile
 build/
 m4/
 CMakeFiles/
+.vs/
 
 examples/example01
 examples/example02
@@ -41,10 +44,14 @@ examples/example25
 
 *.exe
 CMakeCache.txt
+cmake_install.cmake
 
 conanbuildinfo.cmake
 conaninfo.txt
 bin/
+
+extras/curlpp-config
+extras/curlpp.pc
 /.vscode/*
 /conan.lock
 /conanbuildinfo.txt

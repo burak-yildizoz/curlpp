@@ -24,8 +24,6 @@
 #ifndef CURLPP_CURL_HANDLE_HPP
 #define CURLPP_CURL_HANDLE_HPP
 
-
-
 #include "../Exception.hpp"
 #include "../Types.hpp"
 
@@ -33,24 +31,16 @@
 
 #include <memory>
 
+namespace curlpp {
 
-namespace curlpp
-{
-
-
-namespace internal
-{
-
+namespace internal {
 
 	/**
 	* Wrapper for CURL * handle.
 	*/
 
-	class CurlHandle
-	{
-
+class CurlHandle {
 	public:
-
 		CurlHandle();
 		CurlHandle(CURL * handle);
 
@@ -97,58 +87,59 @@ namespace internal
 		template<typename T>
 		void getInfo(CURLINFO info, T & value) const;
 
-
 		template<typename FunctorType>
-		typename FunctorType::ResultType execute(FunctorType functor, typename FunctorType::ParamList params);
-
+  typename FunctorType::ResultType execute(
+      FunctorType functor,
+      typename FunctorType::ParamList params);
 
 		size_t executeWriteFunctor(char * buffer, size_t size, size_t nitems);
 
-		void setWriteFunctor(curlpp::types::WriteFunctionFunctor functor)
-		{
+  void setWriteFunctor(curlpp::types::WriteFunctionFunctor functor) {
 			mWriteFunctor = functor;
 		}
 
-
 		size_t executeHeaderFunctor(char * buffer, size_t size, size_t nitems);
 
-		void setHeaderFunctor(curlpp::types::WriteFunctionFunctor functor)
-		{
+  void setHeaderFunctor(curlpp::types::WriteFunctionFunctor functor) {
 			mHeaderFunctor = functor;
 		}
 
-
 		size_t executeReadFunctor(char * buffer, size_t size, size_t nitems);
 
-		void setReadFunctor(curlpp::types::ReadFunctionFunctor functor)
-		{
+  void setReadFunctor(curlpp::types::ReadFunctionFunctor functor) {
 			mReadFunctor = functor;
 		}
-
 
 		int executeProgressFunctor(double dltotal, 
 																double dlnow, 
 																double ultotal, 
 																double ulnow);
 
-		void setProgressFunctor(curlpp::types::ProgressFunctionFunctor functor)
-		{
+  void setProgressFunctor(curlpp::types::ProgressFunctionFunctor functor) {
 			mProgressFunctor = functor;
 		}
 
+#if LIBCURL_VERSION_NUM >= 0x072000
+		int executeXferInfoFunctor(	curl_off_t dltotal,
+									curl_off_t dlnow,
+									curl_off_t ultotal,
+									curl_off_t ulnow);
+
+		void setXferInfoFunctor(curlpp::types::XferInfoFunctionFunctor functor)
+		{
+			mXferInfoFunctor = functor;
+		}
+#endif // LIBCURL_VERSION_NUM
 
 		int executeDebugFunctor(curl_infotype, char *, size_t);
 
-		void setDebugFunctor(curlpp::types::DebugFunctionFunctor functor)
-		{
+  void setDebugFunctor(curlpp::types::DebugFunctionFunctor functor) {
 			mDebugFunctor = functor;
 		}
 
-
 		CURLcode executeSslCtxFunctor(void * ssl_ctx);
 
-		void setSslCtxFunctor(curlpp::types::SslCtxFunctionFunctor functor)
-		{
+  void setSslCtxFunctor(curlpp::types::SslCtxFunctionFunctor functor) {
 			mSslFunctor = functor;
 		}
 
@@ -156,7 +147,6 @@ namespace internal
 		void throwException();
 
 	private:
-
 		CurlHandle(const CurlHandle & other);
 		CurlHandle & operator=(const CurlHandle & other);
 
@@ -174,7 +164,6 @@ namespace internal
 		void errorBuffer(char* buffer);
 
 	private:
-
 		CURL * mCurl;
 
 		char mErrorBuffer[CURL_ERROR_SIZE + 1];
@@ -183,20 +172,19 @@ namespace internal
 		curlpp::types::WriteFunctionFunctor mHeaderFunctor;
 		curlpp::types::ReadFunctionFunctor mReadFunctor;
 		curlpp::types::ProgressFunctionFunctor mProgressFunctor;
+#if LIBCURL_VERSION_NUM >= 0x072000
+		curlpp::types::XferInfoFunctionFunctor mXferInfoFunctor;
+#endif // LIBCURL_VERSION_NUM
 		curlpp::types::DebugFunctionFunctor mDebugFunctor;
 		curlpp::types::SslCtxFunctionFunctor mSslFunctor;
 		curlpp::CallbackExceptionBase * mException;
-
 	};
 
-
 } // namespace internal
-
 
 } // namespace curlpp
 
 namespace cURLpp = curlpp;
-
 
 #include "CurlHandle.inl"
 
