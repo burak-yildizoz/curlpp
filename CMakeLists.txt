@@ -107,18 +107,20 @@ endif()
 file(GLOB_RECURSE HeaderFileList "${CMAKE_CURRENT_SOURCE_DIR}/include/*")
 file(GLOB_RECURSE SourceFileList "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
-add_library(${PROJECT_NAME} SHARED ${HeaderFileList} ${SourceFileList})
-set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1 VERSION 1.0.0)
-target_link_libraries(${PROJECT_NAME} PUBLIC CURL::libcurl)
-if(CONAN_LIBS)
-  target_link_libraries(${PROJECT_NAME} PRIVATE ${CONAN_LIBS})
-endif()
-target_include_directories(
-    ${PROJECT_NAME}
-    INTERFACE
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"
-    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-)
+if(BUILD_SHARED_LIBS)
+	add_library(${PROJECT_NAME} SHARED ${HeaderFileList} ${SourceFileList})
+	set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1 VERSION 1.0.0)
+	target_link_libraries(${PROJECT_NAME} PUBLIC CURL::libcurl)
+	if(CONAN_LIBS)
+	  target_link_libraries(${PROJECT_NAME} PRIVATE ${CONAN_LIBS})
+	endif()
+	target_include_directories(
+		${PROJECT_NAME}
+		INTERFACE
+		"$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>"
+		"$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+	)
+endif(BUILD_SHARED_LIBS)
 
 add_library(${PROJECT_NAME}_static STATIC ${HeaderFileList} ${SourceFileList})
 # Make sure that on unix-platforms shared and static libraries have
@@ -147,7 +149,7 @@ target_include_directories(
 install(DIRECTORY include/utilspp/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/utilspp")
 install(DIRECTORY include/curlpp/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/curlpp")
 
-if(CURLPP_BUILD_SHARED_LIBS)
+if(BUILD_SHARED_LIBS)
 install(TARGETS ${PROJECT_NAME}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
